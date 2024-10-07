@@ -16,6 +16,17 @@ builder.Services.AddSingleton<SentimentAnalysisService>();
 builder.Services.AddDbContext<TaskDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("dbcon")));
 
+
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowClient",
+        policy =>
+        {
+            policy.WithOrigins("https://localhost:5173")  // Add your client-side URL here
+                  .AllowAnyMethod()
+                  .AllowAnyHeader();
+        });
+});
 var app = builder.Build();
 
 app.UseDefaultFiles();
@@ -27,7 +38,7 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI();
 }
-
+app.UseCors("AllowClient");
 app.UseHttpsRedirection();
 
 app.UseAuthorization();
