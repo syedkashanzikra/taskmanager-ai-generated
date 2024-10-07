@@ -1,49 +1,52 @@
-import { useEffect, useState } from 'react';
-import './App.css';
+import React, { useState, useEffect } from 'react';
+import TaskList from './components/TaskList';
+import TaskForm from './components/TaskForm';
+import { getTasks, createTask, addNoteToTask } from './utils/api';
 
-function App() {
-    const [forecasts, setForecasts] = useState();
+const App = () => {
+    const [tasks, setTasks] = useState([]);
 
     useEffect(() => {
-        populateWeatherData();
+        // Fetch tasks on component mount
+        const fetchTasks = async () => {
+            try {
+                const data = await getTasks();
+                setTasks(data);
+            } catch (error) {
+                console.error('Error fetching tasks:', error);
+            }
+        };
+
+        fetchTasks();
     }, []);
 
-    const contents = forecasts === undefined
-        ? <p><em>Loading... Please refresh once the ASP.NET backend has started. See <a href="https://aka.ms/jspsintegrationreact">https://aka.ms/jspsintegrationreact</a> for more details.</em></p>
-        : <table className="table table-striped" aria-labelledby="tabelLabel">
-            <thead>
-                <tr>
-                    <th>Date</th>
-                    <th>Temp. (C)</th>
-                    <th>Temp. (F)</th>
-                    <th>Summary</th>
-                </tr>
-            </thead>
-            <tbody>
-                {forecasts.map(forecast =>
-                    <tr key={forecast.date}>
-                        <td>{forecast.date}</td>
-                        <td>{forecast.temperatureC}</td>
-                        <td>{forecast.temperatureF}</td>
-                        <td>{forecast.summary}</td>
-                    </tr>
-                )}
-            </tbody>
-        </table>;
+    // Handle task creation
+    const handleTaskCreate = async (taskData) => {
+        try {
+            const newTask = await createTask(taskData);
+            setTasks([...tasks, newTask]);
+        } catch (error) {
+            console.error('Error creating task:', error);
+        }
+    };
+
+    // Handle adding a note to a task
+    const handleAddNote = async (taskId, noteContent) => {
+        try {
+            const updatedTask = await addNoteToTask(taskId, noteContent);
+            setTasks(tasks.map(task => task.id === taskId ? updatedTask : task));
+        } catch (error) {
+            console.error('Error adding note to task:', error);
+        }
+    };
 
     return (
-        <div>
-            <h1 id="tabelLabel">Weather forecast</h1>
-            <p>This component demonstrates fetching data from the server.</p>
-            {contents}
+        <div className="container mx-auto p-4">
+            <h1 className="text-2xl font-bold mb-4">Task Manager</h1>
+            <TaskForm onTaskCreate={handleTaskCreate} />
+            <TaskList tasks={tasks} onAddNote={handleAddNote} />
         </div>
     );
-    
-    async function populateWeatherData() {
-        const response = await fetch('weatherforecast');
-        const data = await response.json();
-        setForecasts(data);
-    }
-}
+};
 
 export default App;
